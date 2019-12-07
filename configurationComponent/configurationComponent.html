@@ -1,0 +1,76 @@
+<template>
+        <lightning-card  title="Configuration">
+          <label class="slds-form-element__label" for="select-01">
+          <abbr title="required" class="slds-required">Shared Contact Object*</abbr>
+          </label>
+
+                <div class="slds-form-element__control">
+                    <select class="slds-select" id="select-01" onchange={setSharedContactObject}>
+                        <option>--none--</option>
+                        <template for:each = {sObjectsList.data} for:item="obj">
+                            <option key={obj} value={obj} >{obj} </option>
+                        </template>
+                    </select>
+                </div> 
+
+
+                <label class="slds-form-element__label" for="select-02" onchange={setContactField}>Shared Contact Field</label>
+
+                <div class="slds-form-element__control">
+                    <select class="slds-select" id="select-02">
+                        <option>--none--</option>
+                        <template for:each = {fields.data} for:item="field">
+                            <option key={field} value={field} >{field} </option>
+                        </template>
+                    </select>
+                </div> 
+
+                 <label class="slds-form-element__label" for="select-03" onchange={setAccountField}>Shared Account Field</label>
+                <div class="slds-form-element__control">
+                    <select class="slds-select" id="select-03">
+                        <option>--none--</option>
+                        <template for:each = {fields.data} for:item="field">
+                            <option key={field} value={field} >{field} </option>
+                        </template>
+                    </select>
+                </div> 
+        </lightning-card>
+</template>
+<!--
+<template>
+<lightning-button variant="base" label="Base" title="Looks like a link" onclick={handleClick} class="slds-m-left_x-small"></lightning-button>
+	<lightning-card title="Configuration" icon-name="utility:animal_and_nature">
+		<div class="slds-card__body_inner">
+			<template if:true={sObjectsList.data}>
+				<lightning-layout multiple-rows="true" pull-to-boundary="small">
+					<template for:each={sObjectsList.data} for:item="obj">
+						<lightning-layout-item key={obj} size="3" class="slds-p-around_x-small">
+							<lightning-card title={obj}>
+								<div class="slds-p-horizontal_small">
+									
+										<div class="slds-media__body">
+											<p class="slds-m-bottom_xx-small">{obj}</p>
+										</div>
+									
+								</div>
+							</lightning-card>
+						</lightning-layout-item>
+					</template>
+				</lightning-layout>
+			</template>
+			<template if:true={sObjectsList.error}>
+				<div class="slds-text-color_error">
+					An error occurred while loading the schema objects list
+				</div>
+			</template>
+		</div>
+	</lightning-card>
+
+                    <lightning-combobox name="progress"
+                                label="Select Object"
+                                value={value}
+                                placeholder="-Select-"
+                                options={sObjectsList.data}
+                                onclick={handleChange} >
+                     </lightning-combobox>
+</template>-->
