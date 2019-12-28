@@ -1,0 +1,78 @@
+public class DemoMailController {
+   
+	private static String currentAttachmentId ='';
+    static List<String>uploadedAttachments;  
+    static String newBody;
+    public static Attachment att;
+    private static String parentID = '';
+    public DemoMailController()
+    {
+        uploadedAttachments = new List<Id>();
+        newBody='';
+        //ID contactId = [Select contactid from User where id =: Userinfo.getUserid()].contactId;
+		//parentID  = [Select AccountID from Contact where id =: contactid].AccountId;
+    }
+
+    private static String getParentAccountId()
+    { 
+        if(parentID=='')// to avoid creating multiple accounts for multiple attachments in a single prcess
+        {
+         		List<Account> accList = [select id, name from Account where name ='MailControllerAccount'];
+            	if(accList.size()==0)  // to avoid creating multiple accounts when we initiate process each time  
+                {
+                    Account acc = new Account();
+                     acc.name = 'MailControllerAccount';
+                     insert acc;
+                    parentID = acc.Id;
+                    return parentID;
+                }
+            else
+            {
+                parentID = accList[0].id;
+                return parentID;
+            }
+        }else
+        {
+            return parentID;
+        }
+    }
+        
+    @RemoteAction
+    public static String updateAttachment(String name, String body, Boolean isNewFile)
+    {
+        System.debug('Inside Remote Method');
+        system.debug(getParentAccountId());
+        System.debug(body);
+        if(isNewFile)
+        {
+            att =  new Attachment();
+            att.Body = EncodingUtil.base64Decode(body);
+  			att.Name = name ;
+  			att.ParentId = getParentAccountId();
+            insert att;
+            if(currentAttachmentId!='')
+            {	
+                uploadedAttachments.add(currentAttachmentId);
+            }
+            currentAttachmentId = att.Id;
+        }else
+        {
+            system.debug('Current attachment id');
+            system.debug(currentAttachmentId);
+            att = getAttachment(currentAttachmentId);
+            newBody = EncodingUtil.base64Encode(att.body)+body;
+            att.body = EncodingUtil.base64Decode(newBody);
+            upsert att;
+            newBody = '';
+        }	
+       return att.id;
+    }
+	
+    private static Attachment getAttachment(Id attId)
+    {
+        System.debug('Inside get attachment');
+        System.debug(attId);
+        return [Select Id,body from Attachment where id =: attId][0];
+    }
+    
+}

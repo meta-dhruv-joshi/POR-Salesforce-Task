@@ -1,0 +1,141 @@
+<apex:page controller="DemoMailController" >
+    <html>
+        <div>
+            <p>Subject</p>
+            <input type="text" id="subject"/>
+        </div>
+        <div>
+            <p>Body</p>
+            <textarea id = "body"></textarea>
+        </div>
+        
+        <div>
+            <input type="file" id ="files" multiple="multiple" name="files[]" onchange="uploadMultipleAttachments(this);"/> 
+           
+        </div>
+        <button>
+            Send
+        </button>
+        <script type = 'text/javascript'>
+        var fileCounter = 0;
+        var maxStringSize = 6000000;
+        var maxFileSize = 2100000;
+        var chunkSize = 950000;
+        var doneUploading = false;
+        var totalSelectedFiles = 0;
+        
+        function uploadMultipleAttachments(input)
+        {
+            console.log('Inside uload multiple attachment');
+            totalSelectedFiles = input.files.length;
+            console.log(totalSelectedFiles);
+            uploadAllFiles(fileCounter);
+            
+        }
+        
+        function uploadAllFiles(fileCounter)
+        {
+            if(fileCounter < totalSelectedFiles)
+            {  
+                uploadFile(document.getElementById('files').files[fileCounter]);
+            }
+        }
+        
+        function uploadFile( selectedFile )
+        {
+            var name = selectedFile.name;
+            var reader = new FileReader(); 
+            
+            reader.onloadend = function(e) {  
+                var attachmentbodybase64 = window.btoa(reader.result);
+                console.log(attachmentbodybase64.length);
+                if(attachmentbodybase64.length > maxStringSize )
+                 {   alert("File size is too large to handle");}
+                else
+                {
+                    sendFileInChunks(name, attachmentbodybase64, 0, false);
+                }
+            }
+            reader.readAsBinaryString(selectedFile);
+            
+        }
+        
+        function sendFileInChunks(name, attachmentbodybase64, lastIndex, isFileUploaded)
+        {
+            console.log(attachmentbodybase64.length);
+            console.log('Inside send chunk...');
+            console.log(lastIndex);
+            if(lastIndex === 0)
+                {  
+                  Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.DemoMailController.updateAttachment}',name,attachmentbodybase64.substring(0, chunkSize) ,true, function(result, event)
+                  {
+                    if(event.type === 'exception'){
+            		console.log("exception");
+                	console.log(event);
+          			}else if(event.status) 
+                    {
+                        console.log('First chunk...');
+                        //lastIndex = chunkSize +1;  
+                    		isFileUploaded = false;
+                     } 
+                     else {
+                    	console.log(event.message);
+                     }},{buffer: true, escape: true, timeout: 120000});  
+                 
+                    }
+        	else if(lastIndex < attachmentbodybase64.length )
+                {
+                    if(lastIndex + chunkSize < attachmentbodybase64.length)
+                    {
+						Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.DemoMailController.updateAttachment}',name,attachmentbodybase64.substring(lastIndex, lastIndex + chunkSize) ,false, function(result, event)
+                        {
+                            if(event.type === 'exception'){
+            				console.log("exception");
+                			console.log(event);
+          					}else if(event.status) 
+                    		{
+                                console.log('last chunks...');
+                                //lastIndex = lastIndex + chunkSize +1;  
+                  				isFileUploaded =  false; 
+                    		 } 
+                    		else {
+                    			console.log(event.message);
+                     		}},{buffer: true, escape: true, timeout: 120000});
+                                                                                                                                                                                                                        
+                    }else if(lastIndex + chunkSize >= attachmentbodybase64.length)
+                    {
+                       Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.DemoMailController.updateAttachment}',name,attachmentbodybase64.substring(lastIndex,attachmentbodybase64.length-1 ) ,false, function(result, event){
+                       	if(event.type === 'exception'){
+            			console.log("exception");
+                		console.log(event);
+          				}else if(event.status) 
+                   		 {
+                             console.log('last chunks...');
+                             isFileUploaded =  true;	
+                             //fileCounter++;
+                             //console.log('done uploading');
+                         } 
+                     	else {
+                    		console.log('event msg',event.message);
+                     	}},{buffer: true, escape: true, timeout: 120000});                                                                  
+                        
+                     }
+                }
+            
+            	
+               if(lastIndex + chunkSize >= attachmentbodybase64.length)
+               { 
+                  fileCounter++;
+                  uploadAllFiles(fileCounter); 
+                   
+               }
+               else
+               {
+                   console.log('calling send file in chunks recursively...');
+                   lastIndex =  lastIndex + chunkSize+1;
+                   sendFileInChunks(name, attachmentbodybase64, lastIndex, isFileUploaded);
+               }
+        }
+        </script>
+    </html>
+</apex:page>
